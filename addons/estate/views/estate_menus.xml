@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<odoo>
+    <menuitem id="Estate_menu_root" name="Biens immobiliers">
+        <menuitem id="Estate_first_level_menu" name="Tous les biens">
+            <menuitem id="Estate_property_menu_action" action="estate.estate_property_action" name="Voir les propriétés"/>
+        </menuitem>
+        <menuitem id="Estate_second_level_menu" name="Paramètres">
+            <menuitem id="Estate_type_menu_action_1" action="estate.estate_property_type_action" name="Types de propriétés"/>
+            <menuitem id="Estate_type_menu_action_2" action="estate.estate_property_tag_action" name="Tags de propriétés"/>
+        </menuitem>
+    </menuitem>
+</odoo>

@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<odoo>
+
+    <record id="estate_property_treeview" model="ir.ui.view">
+        <field name="name">estate.property.tree</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="postal_code"/>
+                <field name="total_area"/>
+                <field name="number_of_bedrooms"/>
+                <field name="expected_price"/>
+                <field name="selling_price"/>
+                <field name="availibility_date"/>
+                <field name="property_type_id"/>
+                <field name="best_offer"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="estate_property_search" model="ir.ui.view">
+        <field name="name">estate.property.search</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="postal_code"/>
+                <field name="expected_price"/>
+                <field name="number_of_bedrooms"/>
+                <field name="total_area"/>
+                <separator/>
+                <filter string="Archived" name="active" domain="[('active', '=', False)]"/>
+                <filter string="Nouvelles propriétés" name="status" domain="[('status', '=', 'N')]"/>
+                <group string="Group By" expand="1">
+                    <filter string="Code postal" name="postal_code" context="{'group_by':'postal_code'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="estate_property_form" model="ir.ui.view">
+        <field name="name">estate.property.form</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="tag_ids" widget="many2many_tags"/>
+                        <field name="availibility_date"/>
+                        <field name="postal_code"/>
+                        <field name="expected_price"/>
+                        <field name="selling_price"/>
+                        <field name="best_offer"/>
+                        <field name="property_type_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <group>
+                                <field name="description"/>
+                                <field name="number_of_bedrooms"/>
+                                <field name="garage"/>
+                                <field name="garden"/>
+                                <field name="garden_area"/>
+                                <field name="living_area"/>
+                                <field name="total_area"/>
+                            </group>
+                        </page>
+                        <page string="Offres">
+                            <field name="offer_ids"/>
+                        </page>
+                        <page string="Intermédiaires">
+                            <group>
+                                <field name="salesperson_id"/>
+                                <field name="buyer_id"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="estate_property_action" model="ir.actions.act_window">
+        <field name="name">Voir les propriétés</field>
+        <field name="res_model">estate.property</field>
+        <field name="view_mode">tree,form,search</field>
+        <field name="help" type="html">
+          <p>Ajouter et gérer les propriétés du système</p>
+        </field>
+    </record>
+
+</odoo>
