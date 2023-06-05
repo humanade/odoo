@@ -1,6 +1,7 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, exceptions, tools
 from datetime import date
 from dateutil.relativedelta import relativedelta
+
 
 class EstateProperty(models.Model):
     def get_my_list():
@@ -9,9 +10,12 @@ class EstateProperty(models.Model):
                 ('A', 'Offer Accepted'), 
                 ('S', 'Sold'), 
                 ('C', 'Canceled')]
+    def get_orientations():
+        return [('N', 'North'), ('W', 'West'), ('S', 'South'), ('E', 'East')]
 
     _name = "estate.property"
     _description = "Description of the real estate good"
+    _order = "id desc"
 
     active = fields.Boolean('Actif', default=True, invisible="1")
     status = fields.Selection(selection=get_my_list(), required=True, default='N')
@@ -19,13 +23,14 @@ class EstateProperty(models.Model):
     description = fields.Char('Description', required=True)
     postal_code = fields.Char('Code Postal', required=True)
     availibility_date = fields.Date('Date de disponibilité', default=date.today() + relativedelta(months=+3))
-    expected_price = fields.Float('Prix minimum')
-    selling_price = fields.Float('Prix de vente affiché')
-    best_offer = fields.Float(compute='_compute_best_offer', string="Meilleure offre")
+    expected_price = fields.Float('Prix affiché')
+    selling_price = fields.Float('Prix de vente accepté', readonly=True)
+    best_offer = fields.Float(compute='_compute_best_offer', string="Meilleure offre", readonly=True)
     number_of_bedrooms = fields.Integer('Nombre de chambre', required=True, default=2)
     garage = fields.Boolean('Garage', default=False)
     garden = fields.Boolean('Jardin', default=False)
-    garden_area = fields.Integer('Surface extérieure', required=True)
+    garden_area = fields.Integer('Surface extérieure')
+    orientation = fields.Selection(selection=get_orientations())
     living_area = fields.Integer('Surface intérieure', required=True)
     total_area = fields.Integer(compute='_compute_total_area', string="Surface totale")
     property_type_id = fields.Many2one("estate.property.type", string="Type de propriété")
@@ -34,14 +39,45 @@ class EstateProperty(models.Model):
     tag_ids = fields.Many2many("estate.property.tag", string="Tags", copy=False)
     offer_ids = fields.One2many("estate.property.offer", "property_id", string="Offres")
 
+    _sql_constraints = [
+        ('check_expected_price', 'CHECK(expected_price >= 0)', 'Le prix affiché doit être positif.')
+    ]
+
     @api.depends('living_area', 'garden_area')
     def _compute_total_area(self):
-        self.total_area = self.living_area + self.garden_area
+        for record in self:
+            record.total_area = record.living_area + record.garden_area
     
     @api.depends('offer_ids')
     def _compute_best_offer(self):
-        max_offer = 0
-        for offer in self.offer_ids:
-            if max_offer <= offer.price:
-                max_offer = offer.price
-        self.best_offer = max_offer
+        for record in self:
+            max_offer = 0
+            for offer in record.offer_ids:
+                if max_offer <= offer.price:
+                    max_offer = offer.price
+            record.best_offer = max_offer
+
+    @api.onchange('garden')
+    def _onchange_garden(self):
+        for record in self:
+            if record.garden == True:
+                record.garden_area = 200
+                record.orientation = 'N'
+
+    def set_property_to_sold(self):
+        for record in self:
+            if record.status == 'C':
+                print('Problem!')
+                return exceptions.UserError('Cannot sell a canceled property')
+
+    def set_property_to_canceled(self):
+        for record in self:
+            record.status = 'C'
+            return True
+        
+    @api.constrains('selling_price')
+    def _check_selling_price(self):
+        for record in self:
+            if not tools.float_utils.float_is_zero(record.selling_price, precision_rounding=None, precision_digits=2):
+                if tools.float_utils.float_compare(record.selling_price, record.expected_price*0.90, precision_rounding=None, precision_digits=2) < 0:
+                    raise exceptions.ValidationError("Le montant est inférieur à 90% du montant voulu")

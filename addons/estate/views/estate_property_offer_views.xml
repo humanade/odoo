@@ -24,9 +24,11 @@
             <tree>
                 <field name="partner_id"/>
                 <field name="price"/>
-                <field name="status"/>
                 <field name="validity_days"/>
                 <field name="deadline_date"/>
+                <button name="accept_offer" type="object" title="Offre acceptée" icon="fa-check" />
+                <button name="refuse_offer" type="object" title="Offre refusée" icon="fa-times" />
+                <field name="status"/>
             </tree>
         </field>
     </record>
