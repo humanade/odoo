@@ -16,10 +16,21 @@ class EstatePropertyOffer(models.Model):
     property_id = fields.Many2one('estate.property', string='Propriété')
     validity_days = fields.Integer(string='Validité', default=7)
     deadline_date = fields.Date(string='Date de fin de validité', compute='_compute_deadline', inverse='_inverse_deadline')
+    sequence = fields.Integer('Séquence', default=1, help="Utilisé pour ordonner les offres")
     
     _sql_constraints = [
         ('check_offer_price', 'CHECK(price >= 0)', 'Le montant de l''offre doit être positif.')
     ]
+
+    @api.model_create_multi
+    def create(self, args):
+        for record in args:
+            property = self.env["estate.property"].browse(record['property_id'])
+            property.state = 'R'
+            minOffer = min(offer.price for offer in property.offer_ids)
+            if minOffer > record['price']:
+                raise exceptions.UserError("Vous ne pouvez ajouter une offre à un prix inférieur à celles existantes.")
+        return super(EstatePropertyOffer, self).create(args)
 
     @api.depends('validity_days')
     def _compute_deadline(self):
@@ -37,7 +48,7 @@ class EstatePropertyOffer(models.Model):
                     raise exceptions.UserError('Une offre a déja été acceptée')
             
             record.status = 'A'
-            record.property_id.status = 'A'
+            record.property_id.state = 'A'
             record.property_id.buyer_id = self.partner_id
             record.property_id.selling_price = self.price
             return True
@@ -45,11 +56,10 @@ class EstatePropertyOffer(models.Model):
     def refuse_offer(self):
         for record in self:
             if record.status == 'A':
-                record.property_id.status = 'R'
+                record.property_id.state = 'N'
                 record.property_id.buyer_id = None
                 record.property_id.selling_price = 0
 
             record.status = 'R'
             return True
-    
     

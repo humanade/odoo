@@ -21,14 +21,16 @@
         <field name="name">estate.property.offer.tree</field>
         <field name="model">estate.property.offer</field>
         <field name="arch" type="xml">
-            <tree>
+            <!-- editable="bottom" -->
+            <tree decoration-success="status=='A'" decoration-bf="status=='A'" decoration-danger="status=='R'">
+                <field name="sequence" widget="handle"/>
                 <field name="partner_id"/>
                 <field name="price"/>
-                <field name="validity_days"/>
-                <field name="deadline_date"/>
-                <button name="accept_offer" type="object" title="Offre acceptée" icon="fa-check" />
-                <button name="refuse_offer" type="object" title="Offre refusée" icon="fa-times" />
-                <field name="status"/>
+                <field name="validity_days" />
+                <field name="deadline_date" optional="1" />
+                <button name="accept_offer" type="object" title="Offre acceptée" icon="fa-check" attrs="{'invisible': [('status', 'in', ('A', 'R'))]}"/>
+                <button name="refuse_offer" type="object" title="Offre refusée" icon="fa-times" attrs="{'invisible': [('status', 'in', ('A', 'R'))]}"/>
+                <field name="status" invisible="1" />
             </tree>
         </field>
     </record>

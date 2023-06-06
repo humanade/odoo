@@ -5,10 +5,10 @@ from dateutil.relativedelta import relativedelta
 
 class EstateProperty(models.Model):
     def get_my_list():
-        return [('N', 'New'), 
-                ('R', 'Offer Received'), 
-                ('A', 'Offer Accepted'), 
-                ('S', 'Sold'), 
+        return [('N', 'New'),
+                ('R', 'Offer Received'),
+                ('A', 'Offer Accepted'),
+                ('S', 'Sold'),
                 ('C', 'Canceled')]
     def get_orientations():
         return [('N', 'North'), ('W', 'West'), ('S', 'South'), ('E', 'East')]
@@ -18,7 +18,7 @@ class EstateProperty(models.Model):
     _order = "id desc"
 
     active = fields.Boolean('Actif', default=True, invisible="1")
-    status = fields.Selection(selection=get_my_list(), required=True, default='N')
+    state = fields.Selection(selection=get_my_list(), required=True, default='N')
     name = fields.Char('Libellé', required=True)
     description = fields.Char('Description', required=True)
     postal_code = fields.Char('Code Postal', required=True)
@@ -64,15 +64,27 @@ class EstateProperty(models.Model):
                 record.garden_area = 200
                 record.orientation = 'N'
 
+    @api.ondelete(at_uninstall=False)
+    def _do_not_delete_if_state_is_not_appropriate(self):
+        for record in self:
+            if record.state == 'S' or record.state == 'A':
+                raise exceptions.UserError("On ne peut supprimer une propriété avec une offre acceptée ou vendue")
+
+    def set_property_to_new(self):
+        for record in self:
+            record.state = 'N'
+            return True
+
     def set_property_to_sold(self):
         for record in self:
-            if record.status == 'C':
-                print('Problem!')
+            if record.state == 'C':
                 return exceptions.UserError('Cannot sell a canceled property')
+            record.state = 'S'
+            return True
 
     def set_property_to_canceled(self):
         for record in self:
-            record.status = 'C'
+            record.state = 'C'
             return True
         
     @api.constrains('selling_price')

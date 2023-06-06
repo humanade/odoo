@@ -5,9 +5,11 @@
         <field name="name">estate.property.tree</field>
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree decoration-success="state=='A' or state=='R'" decoration-muted="state=='S'">
                 <field name="name"/>
+                <field name="state" invisible="1"/>
                 <field name="postal_code"/>
+                <field name="tag_ids" widget="many2many_tags"/>
                 <field name="total_area"/>
                 <field name="number_of_bedrooms"/>
                 <field name="expected_price"/>
@@ -29,9 +31,10 @@
                 <field name="expected_price"/>
                 <field name="number_of_bedrooms"/>
                 <field name="total_area"/>
-                <separator/>
-                <filter string="Archived" name="active" domain="[('active', '=', False)]"/>
-                <filter string="Nouvelles propriétés" name="status" domain="[('status', '=', 'N')]"/>
+                <filter string="Archivées" name="active" domain="[('active', '=', False)]"/>
+                <filter string="Nouvelles propriétés" name="state" domain="[('state', '=', 'N')]"/>
+                <filter string="Disponible" name="availability" domain="[('state','!=','S')]" help="Montre seulement les biens disponibles"/>
+                <field string="Surface plus grande que..." name="living_area" filter_domain="[('living_area', '>=', self)]"/>
                 <group string="Group By" expand="1">
                     <filter string="Code postal" name="postal_code" context="{'group_by':'postal_code'}"/>
                 </group>
@@ -45,9 +48,10 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="set_property_to_sold" type="object" string="Set to sold" />
-                    <button name="set_property_to_canceled" type="object" string="Cancel" />
-                    <field name="status" widget="statusbar" nolabel="1"/>
+                    <button name="set_property_to_sold" type="object" string="Set to sold" states="A" />
+                    <button name="set_property_to_canceled" type="object" string="Cancel" attrs="{'invisible': [('state', '=', 'C')]}" />
+                    <button name="set_property_to_new" type="object" string="Remettre en vente" states="C" />
+                    <field name="state" widget="statusbar" nolabel="1" readonly="1"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -55,7 +59,7 @@
                     </div>
                     <group>
                         <group>
-                            <field name="tag_ids" widget="many2many_tags"/>
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
                             <field name="availibility_date"/>
                             <field name="postal_code"/>
                         </group>
@@ -63,7 +67,7 @@
                             <field name="expected_price"/>
                             <field name="selling_price" readonly='True'/>
                             <field name="best_offer" readonly='True'/>
-                            <field name="property_type_id"/>
+                            <field name="property_type_id" options="{'no_create_edit': True, 'no_open': True}"/>
                         </group>
                     </group>
                     <notebook>
@@ -73,14 +77,14 @@
                                 <field name="number_of_bedrooms"/>
                                 <field name="garage"/>
                                 <field name="garden"/>
-                                <field name="garden_area"/>
-                                <field name="orientation"/>
+                                <field name="garden_area" attrs="{'invisible': [('garden', '=', False)]}"/>
+                                <field name="orientation" attrs="{'invisible': [('garden', '=', False)]}"/>
                                 <field name="living_area"/>
                                 <field name="total_area"/>
                             </group>
                         </page>
                         <page string="Offres">
-                            <field name="offer_ids"/>
+                            <field name="offer_ids" attrs="{'readonly': [('state', 'in', ('S','A','C'))]}"/>
                         </page>
                         <page string="Intermédiaires">
                             <group>
@@ -98,6 +102,7 @@
         <field name="name">Voir les propriétés</field>
         <field name="res_model">estate.property</field>
         <field name="view_mode">tree,form,search</field>
+        <field name="context">{'search_default_availability': True }</field>
         <field name="help" type="html">
           <p>Ajouter et gérer les propriétés du système</p>
         </field>
