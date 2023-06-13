@@ -2,7 +2,6 @@ from odoo import models, fields, api, exceptions, tools
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-
 class EstateProperty(models.Model):
     def get_my_list():
         return [('N', 'New'),
